@@ -1,34 +1,50 @@
-// FUNGSI KHUSUS MEMBER (Tanpa Firebase Auth)
-async function handleRegisterMember(e) {
-  e.preventDefault();
+const admin = require('firebase-admin');
 
-  const nama = document.getElementById('namaInput').value;   // Ambil input nama
-  const phone = document.getElementById('phoneInput').value; // Ambil input nomor WA
-  const password = document.getElementById('passwordInput').value;
+if (!admin.apps.length) {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+}
+
+const db = admin.firestore();
+
+// WAJIB ADA: Netlify mencari 'exports.handler'
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { 
+      statusCode: 405, 
+      body: JSON.stringify({ error: 'Method Not Allowed' }) 
+    };
+  }
 
   try {
-    // 1. Kirim data member ke Netlify Function (Langsung ke Firestore)
-    const response = await fetch('/.netlify/functions/register-member', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: nama,
-        phone: phone,
-        password: password,
-        role: 'member' // Menandakan akun ini murni Member
-      })
+    const { username, phone, password } = JSON.parse(event.body);
+
+    if (!phone || !username) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Nama dan Nomor WA wajib diisi' })
+      };
+    }
+
+    // Simpan data member khusus WA ke koleksi 'members'
+    await db.collection('members').add({
+      username: username,
+      phone: phone,
+      password: password,
+      role: 'member',
+      createdAt: new Date().toISOString()
     });
 
-    const resData = await response.json();
-
-    if (response.ok) {
-      alert("Pendaftaran Member Matchabean Berhasil!");
-      window.location.href = "/login"; // Ke halaman login member
-    } else {
-      alert("Gagal: " + (resData.error || "Terjadi kesalahan"));
-    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Registrasi member berhasil' })
+    };
   } catch (err) {
-    console.error(err);
-    alert("Terjadi masalah jaringan.");
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message })
+    };
   }
-}
+};
