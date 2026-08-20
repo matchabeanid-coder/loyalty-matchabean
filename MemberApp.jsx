@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { auth, signInWithCustomToken } from '../firebase';
+import { auth, signInWithCustomToken } from './firebase';
 
 const fn = (path) => `/.netlify/functions/${path}`;
 const normalize = (p) => p.replace(/\D/g, '').replace(/^0/, '62');
