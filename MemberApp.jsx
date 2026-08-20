@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { db } from './firebase'; // Pastikan path ke file firebaseConfig sesuai
+import { db } from './firebaseConfig'; // Menggunakan firebaseConfig bawaan project
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
-
-const normalize = (p) => p.replace(/\D/g, '').replace(/^0/, '62');
 
 export default function MemberApp({ onLogin, onBack }) {
   const [mode, setMode] = useState('register'); // 'register' atau 'login'
@@ -11,7 +9,9 @@ export default function MemberApp({ onLogin, onBack }) {
   const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 1. FUNGSI DAFTAR MEMBER (Langsung ke Firestore)
+  const normalize = (p) => p.replace(/\D/g, '').replace(/^0/, '62');
+
+  // FUNGSI DAFTAR MEMBER
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -19,7 +19,6 @@ export default function MemberApp({ onLogin, onBack }) {
     try {
       const formattedPhone = normalize(phone);
 
-      // Simpan data member langsung ke koleksi 'members'
       await addDoc(collection(db, 'members'), {
         username: name,
         phone: formattedPhone,
@@ -29,7 +28,7 @@ export default function MemberApp({ onLogin, onBack }) {
       });
 
       alert('Pendaftaran Member Matchabean Berhasil!');
-      setMode('login'); // Otomatis pindah ke mode login
+      setMode('login');
     } catch (err) {
       console.error(err);
       alert('Gagal mendaftar: ' + err.message);
@@ -38,7 +37,7 @@ export default function MemberApp({ onLogin, onBack }) {
     }
   };
 
-  // 2. FUNGSI LOGIN MEMBER (Cek Nomor WA & Password di Firestore)
+  // FUNGSI LOGIN MEMBER
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -49,7 +48,7 @@ export default function MemberApp({ onLogin, onBack }) {
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
-        alert('Nomor WA belum terdaftar!');
+        alert('Nomor WhatsApp belum terdaftar!');
         setLoading(false);
         return;
       }
@@ -80,72 +79,99 @@ export default function MemberApp({ onLogin, onBack }) {
   };
 
   return (
-    <div className="member-container">
-      <h2>MATCHABEAN CLUB</h2>
-      <p>Balance in every cup</p>
+    <div style={{ padding: '20px', maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
+      <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ color: '#1b4332', marginBottom: '4px' }}>MATCHABEAN CLUB</h2>
+        <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>Balance in every cup</p>
 
-      {mode === 'register' ? (
-        <form onSubmit={handleRegister}>
-          <h3>Daftar Member</h3>
-          <input
-            type="text"
-            placeholder="Nama Lengkap"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <input
-            type="tel"
-            placeholder="Nomor WhatsApp"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password / PIN"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Memproses...' : 'DAFTAR & BUAT MEMBER'}
-          </button>
-          <p onClick={() => setMode('login')} style={{ cursor: 'pointer', marginTop: '10px' }}>
-            Sudah punya akun? <b>Kembali Login</b>
-          </p>
-        </form>
-      ) : (
-        <form onSubmit={handleLogin}>
-          <h3>Login Member</h3>
-          <input
-            type="tel"
-            placeholder="Nomor WhatsApp"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password / PIN"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Memproses...' : 'LOGIN MEMBER'}
-          </button>
-          <p onClick={() => setMode('register')} style={{ cursor: 'pointer', marginTop: '10px' }}>
-            Belum punya akun? <b>Daftar Member</b>
-          </p>
-        </form>
-      )}
+        {mode === 'register' ? (
+          <form onSubmit={handleRegister}>
+            <h3 style={{ marginBottom: '16px' }}>Daftar Member</h3>
+            <p style={{ fontSize: '12px', color: '#666', marginBottom: '16px' }}>
+              Scan QR pendaftaran Matchabean dari booth, lalu isi data di bawah.
+            </p>
+            <input
+              type="text"
+              placeholder="Nama Lengkap"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              style={{ width: '100%', padding: '12px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+            />
+            <input
+              type="tel"
+              placeholder="Nomor WhatsApp"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              style={{ width: '100%', padding: '12px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+            />
+            <input
+              type="password"
+              placeholder="Password / PIN"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              required
+              style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ width: '100%', padding: '12px', backgroundColor: '#1b4332', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              {loading ? 'Memproses...' : 'DAFTAR & BUAT MEMBER'}
+            </button>
+            <p
+              onClick={() => setMode('login')}
+              style={{ cursor: 'pointer', marginTop: '16px', color: '#1b4332', fontSize: '14px', fontWeight: 'bold' }}
+            >
+              Kembali Login
+            </p>
+          </form>
+        ) : (
+          <form onSubmit={handleLogin}>
+            <h3 style={{ marginBottom: '16px' }}>Login Member</h3>
+            <input
+              type="tel"
+              placeholder="Nomor WhatsApp"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              style={{ width: '100%', padding: '12px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+            />
+            <input
+              type="password"
+              placeholder="Password / PIN"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              required
+              style={{ width: '100%', padding: '12px', marginBottom: '16px', borderRadius: '8px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ width: '100%', padding: '12px', backgroundColor: '#1b4332', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+            >
+              {loading ? 'Memproses...' : 'LOGIN MEMBER'}
+            </button>
+            <p
+              onClick={() => setMode('register')}
+              style={{ cursor: 'pointer', marginTop: '16px', color: '#1b4332', fontSize: '14px', fontWeight: 'bold' }}
+            >
+              Belum Punya Akun? Daftar Member
+            </p>
+          </form>
+        )}
 
-      {onBack && (
-        <button onClick={onBack} style={{ marginTop: '15px' }}>
-          Kembali
-        </button>
-      )}
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{ marginTop: '12px', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}
+          >
+            ← Kembali
+          </button>
+        )}
+      </div>
     </div>
   );
 }
