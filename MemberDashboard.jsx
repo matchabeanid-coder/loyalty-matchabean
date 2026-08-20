@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { auth, db } from '../firebase';
+import { auth, db } from './firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import PromoSlider from './PromoSlider';
 
