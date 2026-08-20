@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { db } from './firebaseConfig'; // Menggunakan firebaseConfig bawaan project
+import { db } from './firebase';
+ // Menggunakan firebaseConfig bawaan project
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 export default function MemberApp({ onLogin, onBack }) {
