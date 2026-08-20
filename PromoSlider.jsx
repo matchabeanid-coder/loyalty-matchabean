@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
+import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 export default function PromoSlider() {
   const [promos, setPromos] = useState([]);
-  const [active, setActive] = useState(0);
 
   useEffect(() => {
     const fetchPromos = async () => {
       try {
-        const snap = await getDocs(collection(db, 'promos'));
-        const list = snap.docs.map(doc => doc.data()).filter(p => p.imageUrl);
-        setPromos(list);
+        const querySnapshot = await getDocs(collection(db, 'promos'));
+        setPromos(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
-        console.error("Error loading promos", err);
+        console.error("Gagal mengambil promo:", err);
       }
     };
     fetchPromos();
@@ -22,15 +20,13 @@ export default function PromoSlider() {
   if (promos.length === 0) return null;
 
   return (
-    <div className="w-full space-y-2">
-      <div className="text-xs font-semibold uppercase tracking-wider text-[#a3e635]">Special Offers</div>
-      <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar pb-2">
-        {promos.map((promo, idx) => (
-          <div key={idx} className="snap-center shrink-0 w-[280px] h-[140px] rounded-2xl overflow-hidden relative border border-[#233529] shadow-lg">
-            <img src={promo.imageUrl} alt={promo.title || "Promo"} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#121d17] via-transparent to-transparent p-3 flex flex-col justify-end">
-              <span className="text-sm font-bold text-white">{promo.title}</span>
-            </div>
+    <div className="bg-[#1a2921] p-4 rounded-2xl border border-emerald-800/40 space-y-3">
+      <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Promo Spesial</h3>
+      <div className="space-y-2">
+        {promos.map((p) => (
+          <div key={p.id} className="bg-[#121d17] p-3 rounded-xl border border-emerald-900/60">
+            <p className="text-xs font-bold text-emerald-100">{p.title}</p>
+            {p.desc && <p className="text-[10px] text-emerald-200/60 mt-1">{p.desc}</p>}
           </div>
         ))}
       </div>
