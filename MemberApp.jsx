@@ -1,102 +1,151 @@
-import React, { useEffect, useState } from 'react';
-import { auth, signInWithCustomToken } from './firebase';
+import React, { useState } from 'react';
+import { db } from './firebase'; // Pastikan path ke file firebaseConfig sesuai
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
-const fn = (path) => `/.netlify/functions/${path}`;
 const normalize = (p) => p.replace(/\D/g, '').replace(/^0/, '62');
 
 export default function MemberApp({ onLogin, onBack }) {
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState('register'); // 'register' atau 'login'
+  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [notFound, setNotFound] = useState(false);
-  const [adminWhatsapp, setAdminWhatsapp] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Public registration/login does not need Firestore access. The number is
-    // supplied through a build-time environment variable for the WhatsApp CTA.
-    setAdminWhatsapp(import.meta.env.VITE_ADMIN_WHATSAPP || '');
-  }, []);
+  // 1. FUNGSI DAFTAR MEMBER (Langsung ke Firestore)
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const submit = async () => {
-    setBusy(true);
-    setMsg('');
-    setNotFound(false);
     try {
-      const path = mode === 'login' ? 'member-login' : 'register-member';
-      const payload = mode === 'login'
-        ? { phone: normalize(phone), pin }
-        : { name, phone: normalize(phone), pin };
-      const r = await fetch(fn(path), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const formattedPhone = normalize(phone);
+
+      // Simpan data member langsung ke koleksi 'members'
+      await addDoc(collection(db, 'members'), {
+        username: name,
+        phone: formattedPhone,
+        password: pin,
+        role: 'member',
+        createdAt: new Date().toISOString()
       });
-      const d = await r.json();
-      if (!r.ok) {
-        if (r.status === 404 && mode === 'login') setNotFound(true);
-        throw new Error(d.error || 'Gagal');
-      }
-      await signInWithCustomToken(auth, d.token);
-      onLogin(d.member);
-    } catch (e) {
-      setMsg(e.message);
+
+      alert('Pendaftaran Member Matchabean Berhasil!');
+      setMode('login'); // Otomatis pindah ke mode login
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mendaftar: ' + err.message);
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
   };
 
-  const registerUrl = `${location.origin}${location.pathname}?register=1`;
-  const waNumber = normalize(adminWhatsapp);
-  const waText = encodeURIComponent(`Halo Matchabean 👋\n\nSaya ingin mendaftar Matchabean Club.\n\nNama:\nNomor WhatsApp:\n\nMohon bantu daftarkan saya.`);
-  const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waText}` : '';
+  // 2. FUNGSI LOGIN MEMBER (Cek Nomor WA & Password di Firestore)
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const formattedPhone = normalize(phone);
+      const q = query(collection(db, 'members'), where('phone', '==', formattedPhone));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        alert('Nomor WA belum terdaftar!');
+        setLoading(false);
+        return;
+      }
+
+      let isMatch = false;
+      let userData = null;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.password === pin || data.pin === pin) {
+          isMatch = true;
+          userData = data;
+        }
+      });
+
+      if (isMatch) {
+        alert(`Selamat datang, ${userData.username}!`);
+        if (onLogin) onLogin(userData);
+      } else {
+        alert('Password / PIN salah!');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Gagal login: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="auth-page">
-      <div className="auth-box">
-        <img className="brand-logo" src="/logo.jpg" alt="Matchabean" />
-        <h1>MATCHABEAN CLUB</h1>
-        <p className="tagline">Balance in every cup</p>
+    <div className="member-container">
+      <h2>MATCHABEAN CLUB</h2>
+      <p>Balance in every cup</p>
 
-        {mode === 'register' ? (
-          <>
-            <h2>Daftar Member</h2>
-            <p>Scan QR pendaftaran Matchabean dari booth, lalu isi data di bawah.</p>
-            <input placeholder="Nama lengkap" value={name} onChange={(e) => setName(e.target.value)} />
-            <input placeholder="WhatsApp 08xxxxxxxxxx" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <input placeholder="PIN 6 digit" type="password" inputMode="numeric" maxLength="6" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
-            <button className="primary" disabled={busy} onClick={submit}>{busy ? 'Memproses...' : 'DAFTAR & BUAT MEMBER'}</button>
-            <button className="ghost" onClick={() => { setMode('login'); history.replaceState({}, '', location.pathname); }}>Kembali Login</button>
-          </>
-        ) : (
-          <>
-            <h2>Member Login</h2>
-            <input placeholder="Nomor WhatsApp" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <input placeholder="PIN 6 digit" type="password" inputMode="numeric" maxLength="6" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
-            <button className="primary" disabled={busy} onClick={submit}>{busy ? 'Masuk...' : 'MASUK MEMBER'}</button>
-            <button className="outline" onClick={() => { setMode('register'); setMsg(''); setNotFound(false); history.replaceState({}, '', `${location.pathname}?register=1`); }}>DAFTAR MEMBER</button>
-            <button className="ghost" onClick={onBack}>Kembali</button>
-          </>
-        )}
+      {mode === 'register' ? (
+        <form onSubmit={handleRegister}>
+          <h3>Daftar Member</h3>
+          <input
+            type="text"
+            placeholder="Nama Lengkap"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <input
+            type="tel"
+            placeholder="Nomor WhatsApp"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password / PIN"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Memproses...' : 'DAFTAR & BUAT MEMBER'}
+          </button>
+          <p onClick={() => setMode('login')} style={{ cursor: 'pointer', marginTop: '10px' }}>
+            Sudah punya akun? <b>Kembali Login</b>
+          </p>
+        </form>
+      ) : (
+        <form onSubmit={handleLogin}>
+          <h3>Login Member</h3>
+          <input
+            type="tel"
+            placeholder="Nomor WhatsApp"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password / PIN"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Memproses...' : 'LOGIN MEMBER'}
+          </button>
+          <p onClick={() => setMode('register')} style={{ cursor: 'pointer', marginTop: '10px' }}>
+            Belum punya akun? <b>Daftar Member</b>
+          </p>
+        </form>
+      )}
 
-        {msg && <p className="error">{msg}</p>}
-        {notFound && (
-          <div className="not-found-box">
-            <b>Member belum ditemukan.</b>
-            <span>Anda bisa mendaftar sendiri atau menghubungi admin Matchabean.</span>
-            {waUrl && <a className="whatsapp-button" href={waUrl} target="_blank" rel="noreferrer">DAFTAR VIA WHATSAPP</a>}
-            <button className="primary" onClick={() => { setMode('register'); setMsg(''); setNotFound(false); }}>DAFTAR SEKARANG</button>
-          </div>
-        )}
-
-        <div className="qr-register">
-          <b>QR PENDAFTARAN</b>
-          <span>Admin bisa menampilkan QR ini di booth.</span>
-          <button onClick={() => navigator.clipboard?.writeText(registerUrl)}>Salin link</button>
-        </div>
-      </div>
+      {onBack && (
+        <button onClick={onBack} style={{ marginTop: '15px' }}>
+          Kembali
+        </button>
+      )}
     </div>
   );
 }
