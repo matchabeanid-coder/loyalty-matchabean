@@ -1,0 +1,3 @@
+import React,{useEffect,useRef,useState} from 'react';
+import {Html5Qrcode} from 'html5-qrcode';
+export default function QRScanner({onScan}){const ref=useRef(null);const [error,setError]=useState('');useEffect(()=>{let scanner;let stopped=false;(async()=>{try{scanner=new Html5Qrcode('qr-reader');await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},text=>{if(stopped)return;stopped=true;onScan(text.trim());scanner.stop().catch(()=>{});},()=>{});}catch(e){setError('Kamera tidak bisa dibuka. Izinkan akses kamera di browser.')}})();return()=>{stopped=true;scanner?.stop().catch(()=>{})}},[onScan]);return <div className="scanner-card"><div id="qr-reader" ref={ref}/>{error&&<p className="error">{error}</p>}</div>}

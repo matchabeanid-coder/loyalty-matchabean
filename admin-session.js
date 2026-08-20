@@ -1,0 +1,2 @@
+import {auth,db,json,userFrom} from './_admin.js';
+export default async event=>{try{const u=await userFrom(event);const s=await db.doc(`users/${u.uid}`).get();if(!s.exists||s.data().role!=='admin')return json(403,{error:'Akun ini bukan admin. Atur users/UID role=admin di Firestore.'});await auth.setCustomUserClaims(u.uid,{role:'admin'});return json(200,{ok:true})}catch(e){return json(401,{error:e.message})}}
