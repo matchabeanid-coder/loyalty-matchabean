@@ -1,7 +1,39 @@
-import React, {useEffect,useState} from 'react';
-export default function PromoSlider({promos=[]}){
- const slides=[1,2,3,4].map((n,i)=>promos[i]||{title:`PROMO ${n}`,image:''});
- const [i,setI]=useState(0);
- useEffect(()=>{const t=setInterval(()=>setI(x=>(x+1)%4),4500);return()=>clearInterval(t)},[]);
- return <div className="promo-wrap"><div className="promo-track" style={{transform:`translateX(-${i*100}%)`}}>{slides.map((p,k)=><div className="promo-slide" key={k}>{p.image?<img src={p.image} alt={p.title||`Promo ${k+1}`}/>:<div className="promo-empty"><span>🌿</span><b>{p.title||`PROMO ${k+1}`}</b><small>Upload promo dari Admin</small></div>}</div>)}</div><div className="dots">{slides.map((_,k)=><button key={k} className={k===i?'active':''} onClick={()=>setI(k)} aria-label={`Slide ${k+1}`}/>)}</div></div>
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+
+export default function PromoSlider() {
+  const [promos, setPromos] = useState([]);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const fetchPromos = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'promos'));
+        const list = snap.docs.map(doc => doc.data()).filter(p => p.imageUrl);
+        setPromos(list);
+      } catch (err) {
+        console.error("Error loading promos", err);
+      }
+    };
+    fetchPromos();
+  }, []);
+
+  if (promos.length === 0) return null;
+
+  return (
+    <div className="w-full space-y-2">
+      <div className="text-xs font-semibold uppercase tracking-wider text-[#a3e635]">Special Offers</div>
+      <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar pb-2">
+        {promos.map((promo, idx) => (
+          <div key={idx} className="snap-center shrink-0 w-[280px] h-[140px] rounded-2xl overflow-hidden relative border border-[#233529] shadow-lg">
+            <img src={promo.imageUrl} alt={promo.title || "Promo"} className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#121d17] via-transparent to-transparent p-3 flex flex-col justify-end">
+              <span className="text-sm font-bold text-white">{promo.title}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
