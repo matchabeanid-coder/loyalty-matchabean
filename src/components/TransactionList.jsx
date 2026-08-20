@@ -1,45 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 export default function TransactionList() {
-  const [txs, setTxs] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
-    const fetchTxs = async () => {
+    const fetchTransactions = async () => {
       try {
-        const q = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(q);
-        setTxs(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const q = query(collection(db, 'transactions'), orderBy('timestamp', 'desc'));
+        const querySnapshot = await getDocs(q);
+        setTransactions(querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
-        console.error("Tx load error", err);
+        console.error(err);
       }
     };
-    fetchTxs();
+    fetchTransactions();
   }, []);
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-bold text-white">Riwayat Transaksi</h3>
-      <div className="space-y-2">
-        {txs.map(tx => {
-          const dateStr = tx.createdAt?.toDate ? tx.createdAt.toDate().toLocaleString('id-ID') : 'Baru saja';
-          return (
-            <div key={tx.id} className="bg-[#1b2a20] p-3 rounded-xl border border-[#2b3f31] flex justify-between items-center text-xs">
-              <div>
-                <p className="font-bold text-white">{tx.memberName} ({tx.memberCode})</p>
-                <p className="text-gray-400">{dateStr}</p>
-              </div>
-              <div className="text-right">
-                <span className={`font-bold px-2 py-1 rounded ${tx.stampDelta > 0 ? 'bg-[#a3e635]/20 text-[#a3e635]' : 'bg-red-500/20 text-red-400'}`}>
-                  {tx.stampDelta > 0 ? `+${tx.stampDelta}` : tx.stampDelta} Stamp
-                </span>
-                <p className="text-gray-400 mt-1">Total: {tx.stampAfter}</p>
-              </div>
+    <div className="space-y-2">
+      <h3 className="text-sm font-bold text-emerald-400 mb-2">Riwayat Transaksi</h3>
+      {transactions.length === 0 ? (
+        <p className="text-xs text-emerald-200/40 text-center py-4">Belum ada riwayat transaksi</p>
+      ) : (
+        transactions.map((t) => (
+          <div key={t.id} className="bg-[#1a2921] p-3 rounded-xl border border-emerald-800/40 flex justify-between items-center">
+            <div>
+              <p className="text-xs font-bold text-white">{t.memberName || 'Member'}</p>
+              <p className="text-[10px] text-emerald-200/60">{t.type || 'Tambah Stamp'}</p>
             </div>
-          );
-        })}
-      </div>
+            <span className="text-xs text-emerald-400 font-bold">{t.amount || '+1'}</span>
+          </div>
+        ))
+      )}
     </div>
   );
 }
