@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { db } from '../../firebase';
+import { db } from './firebase'; // Sesuaikan jika titik satu (./) atau dua (../)
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 
 export default function MemberApp({ settings }) {
@@ -11,7 +11,6 @@ export default function MemberApp({ settings }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Handle Login / Cek Member
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!phone) return;
@@ -24,7 +23,7 @@ export default function MemberApp({ settings }) {
         const docData = querySnapshot.docs[0].data();
         setMember({ id: querySnapshot.docs[0].id, ...docData });
       } else {
-        setErrorMsg('Member tidak ditemukan. Silakan daftar terlebih dahulu.');
+        setErrorMsg('Member tidak ditemukan. Silakan daftar dulu.');
         setMember(null);
       }
     } catch (err) {
@@ -34,39 +33,27 @@ export default function MemberApp({ settings }) {
     setLoading(false);
   };
 
-  // Handle Registrasi Member Baru
   const handleRegister = async (e) => {
     e.preventDefault();
     if (!name || !phone || !pin) {
-      setErrorMsg('Gagal: Harap isi semua kolom!');
+      setErrorMsg('Harap isi semua kolom!');
       return;
     }
     setLoading(true);
     setErrorMsg('');
     try {
-      // Cek apakah nomor HP sudah terdaftar
       const q = query(collection(db, 'members'), where('phone', '==', phone));
       const existing = await getDocs(q);
       if (!existing.empty) {
-        setErrorMsg('Gagal: Nomor WhatsApp sudah terdaftar!');
+        setErrorMsg('Nomor WhatsApp sudah terdaftar!');
         setLoading(false);
         return;
       }
 
-      const newMember = {
-        name,
-        phone,
-        pin,
-        stamps: 0,
-        createdAt: new Date().toISOString()
-      };
-
+      const newMember = { name, phone, pin, stamps: 0, createdAt: new Date().toISOString() };
       const docRef = await addDoc(collection(db, 'members'), newMember);
       setMember({ id: docRef.id, ...newMember });
       setIsRegister(false);
-      setName('');
-      setPhone('');
-      setPin('');
     } catch (err) {
       console.error(err);
       setErrorMsg('Gagal mendaftar.');
@@ -75,156 +62,90 @@ export default function MemberApp({ settings }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a2921] p-4 flex flex-col items-center justify-center font-sans text-[#1a2921]">
-      <div className="w-full max-w-md bg-[#f5f2e9] rounded-[32px] p-6 shadow-2xl space-y-6 text-center border border-[#e2ddd0]">
+    <div style={{ backgroundColor: '#1a2921', minHeight: '100vh', padding: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
+      {/* Card Utama Berwarna Cream */}
+      <div style={{ backgroundColor: '#f5f2e9', width: '100%', maxWidth: '380px', borderRadius: '32px', padding: '28px 20px', border: '1px solid #e2ddd0', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)', textAlign: 'center' }}>
         
-        {/* Header Logo / Title */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-black tracking-wider uppercase text-[#1a2921]">
-            {settings?.brandName || 'MATCHABEAN CLUB'}
-          </h1>
-          <p className="text-xs text-[#5a6b5c] font-medium">
-            {settings?.tagline || 'Balance in every cup'}
-          </p>
-        </div>
+        {/* Header */}
+        <h1 style={{ fontSize: '22px', fontWeight: '900', color: '#1a2921', letterSpacing: '1px', margin: '0 0 4px 0', textTransform: 'uppercase' }}>
+          {settings?.brandName || 'MATCHABEAN CLUB'}
+        </h1>
+        <p style={{ fontSize: '13px', color: '#5a6b5c', margin: '0 0 24px 0', fontWeight: '500' }}>
+          {settings?.tagline || 'Balance in every cup'}
+        </p>
 
-        {/* Dynamic Section: Registered Member Stamp View */}
         {member ? (
-          <div className="space-y-5 text-left pt-2">
-            <div className="bg-[#eae5d8] p-4 rounded-2xl flex justify-between items-center border border-[#d8d2c2]">
+          /* Tampilan Stamp Member */
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ backgroundColor: '#eae5d8', padding: '14px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #d8d2c2', marginBottom: '16px' }}>
               <div>
-                <h3 className="font-bold text-lg text-[#1a2921]">{member.name}</h3>
-                <p className="text-xs text-[#5a6b5c]">{member.phone}</p>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#1a2921' }}>{member.name}</h3>
+                <p style={{ margin: 0, fontSize: '12px', color: '#5a6b5c' }}>{member.phone}</p>
               </div>
-              <div className="bg-[#1a2921] text-[#f5f2e9] px-3 py-1.5 rounded-full text-xs font-bold">
-                {member.stamps || 0} / {settings?.stampTarget || 10} Stamp
+              <div style={{ backgroundColor: '#1a2921', color: '#f5f2e9', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>
+                {member.stamps || 0} / 10 Stamp
               </div>
             </div>
 
-            {/* Stamp Grid */}
-            <div className="grid grid-cols-5 gap-2.5 py-2">
-              {Array.from({ length: settings?.stampTarget || 10 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`aspect-square rounded-2xl flex items-center justify-center font-bold text-sm border-2 transition-all ${
-                    i < (member.stamps || 0)
-                      ? 'bg-[#1a2921] text-[#f5f2e9] border-[#1a2921]'
-                      : 'bg-[#f5f2e9] text-[#b0a898] border-[#d8d2c2]'
-                  }`}
-                >
+            {/* Grid 10 Stamp */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '20px' }}>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} style={{ aspectRatio: '1/1', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px', border: '2px solid #1a2921', backgroundColor: i < (member.stamps || 0) ? '#1a2921' : '#f5f2e9', color: i < (member.stamps || 0) ? '#f5f2e9' : '#b0a898' }}>
                   {i + 1}
                 </div>
               ))}
             </div>
 
-            <button
-              onClick={() => setMember(null)}
-              className="w-full text-xs text-[#5a6b5c] underline font-semibold text-center pt-2"
-            >
+            <button onClick={() => setMember(null)} style={{ width: '100%', background: 'none', border: 'none', color: '#5a6b5c', textDecoration: 'underline', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
               Keluar / Gunakan Nomor Lain
             </button>
           </div>
         ) : (
-          /* Form Section: Login vs Register */
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <h2 className="text-xl font-bold text-[#1a2921]">
-                {isRegister ? 'Daftar Member' : 'Cek Stamp Member'}
-              </h2>
-              <p className="text-xs text-[#6b7c6d] leading-relaxed max-w-xs mx-auto">
-                {isRegister
-                  ? 'Scan QR pendaftaran Matchabean dari booth, lalu isi data di bawah.'
-                  : 'Masukkan nomor WhatsApp terdaftar untuk melihat perolehan stamp kamu.'}
-              </p>
-            </div>
+          /* Tampilan Form */
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a2921', margin: '0 0 6px 0' }}>
+              {isRegister ? 'Daftar Member' : 'Cek Stamp Member'}
+            </h2>
+            <p style={{ fontSize: '12px', color: '#6b7c6d', margin: '0 0 20px 0', lineHeight: '1.4' }}>
+              {isRegister
+                ? 'Scan QR pendaftaran Matchabean dari booth, lalu isi data di bawah.'
+                : 'Masukkan nomor WhatsApp terdaftar untuk melihat perolehan stamp kamu.'}
+            </p>
 
             {isRegister ? (
-              /* Register Form */
-              <form onSubmit={handleRegister} className="space-y-3 pt-2">
-                <input
-                  type="text"
-                  placeholder="Nama Lengkap"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white border border-[#d8d2c2] rounded-2xl px-4 py-3 text-sm text-[#1a2921] focus:outline-none focus:border-[#1a2921] transition"
-                  required
-                />
-                <input
-                  type="tel"
-                  placeholder="Nomor WhatsApp (misal: 08123456789)"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-white border border-[#d8d2c2] rounded-2xl px-4 py-3 text-sm text-[#1a2921] focus:outline-none focus:border-[#1a2921] transition"
-                  required
-                />
-                <input
-                  type="password"
-                  placeholder="PIN / Password (6 digit)"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  className="w-full bg-white border border-[#d8d2c2] rounded-2xl px-4 py-3 text-sm text-[#1a2921] focus:outline-none focus:border-[#1a2921] transition"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#23382b] text-[#f5f2e9] font-black tracking-wide py-3.5 rounded-2xl hover:bg-[#1a2921] transition text-sm uppercase shadow-md"
-                >
-                  {loading ? 'Memproses...' : 'DAFTAR & BUAT MEMBER'}
+              <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <input type="text" placeholder="Nama Lengkap" value={name} onChange={(e) => setName(e.target.value)} style={{ padding: '12px 16px', borderRadius: '16px', border: '1px solid #d8d2c2', fontSize: '14px', outline: 'none' }} required />
+                <input type="tel" placeholder="Nomor WhatsApp" value={phone} onChange={(e) => setPhone(e.target.value)} style={{ padding: '12px 16px', borderRadius: '16px', border: '1px solid #d8d2c2', fontSize: '14px', outline: 'none' }} required />
+                <input type="password" placeholder="PIN / Password" value={pin} onChange={(e) => setPin(e.target.value)} style={{ padding: '12px 16px', borderRadius: '16px', border: '1px solid #d8d2c2', fontSize: '14px', outline: 'none' }} required />
+                <button type="submit" disabled={loading} style={{ backgroundColor: '#23382b', color: '#f5f2e9', padding: '14px', borderRadius: '16px', border: 'none', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', marginTop: '6px' }}>
+                  {loading ? 'MEMPROSES...' : 'DAFTAR & BUAT MEMBER'}
                 </button>
               </form>
             ) : (
-              /* Login Form */
-              <form onSubmit={handleLogin} className="space-y-3 pt-2">
-                <input
-                  type="tel"
-                  placeholder="Masukkan Nomor WhatsApp"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-white border border-[#d8d2c2] rounded-2xl px-4 py-3 text-sm text-[#1a2921] focus:outline-none focus:border-[#1a2921] transition text-center"
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-[#23382b] text-[#f5f2e9] font-black tracking-wide py-3.5 rounded-2xl hover:bg-[#1a2921] transition text-sm uppercase shadow-md"
-                >
-                  {loading ? 'Mencari...' : 'CEK STAMP SAYA'}
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <input type="tel" placeholder="Masukkan No. WhatsApp" value={phone} onChange={(e) => setPhone(e.target.value)} style={{ padding: '12px 16px', borderRadius: '16px', border: '1px solid #d8d2c2', fontSize: '14px', textAlign: 'center', outline: 'none' }} required />
+                <button type="submit" disabled={loading} style={{ backgroundColor: '#23382b', color: '#f5f2e9', padding: '14px', borderRadius: '16px', border: 'none', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', marginTop: '6px' }}>
+                  {loading ? 'MENCARI...' : 'CEK STAMP SAYA'}
                 </button>
               </form>
             )}
 
-            {/* Toggle Register / Login */}
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRegister(!isRegister);
-                  setErrorMsg('');
-                }}
-                className="text-xs font-bold text-[#1a2921] hover:underline"
-              >
-                {isRegister ? 'Kembali Login' : 'Belum punya member? Daftar di sini'}
-              </button>
-            </div>
+            <button type="button" onClick={() => { setIsRegister(!isRegister); setErrorMsg(''); }} style={{ background: 'none', border: 'none', color: '#1a2921', fontSize: '12px', fontWeight: 'bold', marginTop: '16px', cursor: 'pointer' }}>
+              {isRegister ? 'Kembali Login' : 'Belum punya member? Daftar di sini'}
+            </button>
 
-            {/* Error Message Display */}
             {errorMsg && (
-              <p className="text-xs font-bold text-red-600 bg-red-100/60 py-2 px-3 rounded-xl border border-red-200">
+              <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '8px', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', marginTop: '12px' }}>
                 {errorMsg}
-              </p>
+              </div>
             )}
 
-            {/* Footnote Card */}
-            <div className="bg-[#eae5d8] p-3 rounded-2xl border border-[#d8d2c2] text-[11px] text-[#5a6b5c] space-y-1">
-              <p className="font-bold uppercase tracking-wider text-[#1a2921]">QR Pendaftaran</p>
-              <p>Admin bisa menampilkan QR ini di booth.</p>
-              <button
-                onClick={() => navigator.clipboard.writeText(window.location.href)}
-                className="text-emerald-800 font-bold underline cursor-pointer hover:text-emerald-950"
-              >
+            <div style={{ backgroundColor: '#eae5d8', padding: '12px', borderRadius: '16px', border: '1px solid #d8d2c2', marginTop: '20px', fontSize: '11px', color: '#5a6b5c' }}>
+              <p style={{ fontWeight: 'bold', margin: '0 0 2px 0', color: '#1a2921' }}>QR PENDAFTARAN</p>
+              <p style={{ margin: '0 0 6px 0' }}>Admin bisa menampilkan QR ini di booth.</p>
+              <span onClick={() => navigator.clipboard.writeText(window.location.href)} style={{ color: '#15803d', fontWeight: 'bold', textDecoration: 'underline', cursor: 'pointer' }}>
                 Salin link
-              </button>
+              </span>
             </div>
           </div>
         )}
