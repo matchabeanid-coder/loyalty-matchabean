@@ -1,3 +1,21 @@
 {
-  "name":"MATCHABEAN CLUB","short_name":"Matchabean Club","start_url":"/","display":"standalone","background_color":"#f7f4e8","theme_color":"#294b2b","description":"Loyalty member MATCHABEAN CLUB","icons":[{"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]
+  "short_name": "Matchabean",
+  "name": "Matchabean Club Loyalty App",
+  "icons": [
+    {
+      "src": "pwa-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "pwa-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#121d17",
+  "theme_color": "#121d17",
+  "display": "standalone",
+  "orientation": "portrait"
 }
