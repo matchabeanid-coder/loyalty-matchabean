@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { auth, db } from './firebase';
+import { db, auth } from '../../firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import MemberApp from './components/MemberApp';
-import AdminDashboard from './components/AdminDashboard';
+import MemberApp from './MemberApp.jsx';
+import AdminDashboard from './AdminDashboard.jsx';
 import { Shield, Smartphone } from 'lucide-react';
 
 export default function App() {
@@ -24,74 +24,97 @@ export default function App() {
     const unsub = onAuthStateChanged(auth, (user) => {
       setAdminUser(user);
     });
+    return () => unsub();
+  }, []);
 
+  useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const snap = await getDoc(doc(db, 'settings', 'app'));
-        if (snap.exists()) {
-          setSettings(snap.data());
+        const docRef = doc(db, 'settings', 'general');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSettings(docSnap.data());
         }
       } catch (err) {
-        console.error("Settings load error", err);
+        console.error("Gagal mengambil pengaturan:", err);
       }
     };
     fetchSettings();
-
-    return () => unsub();
   }, []);
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      setEmail('');
+      setPassword('');
     } catch (err) {
-      alert("Login Kasir Gagal: " + err.message);
+      alert("Login gagal: " + err.message);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#121d17] text-[#f7f5f0] flex flex-col">
-      {/* Switcher Header */}
-      <div className="p-2 bg-[#1b2a20] border-b border-[#2b3f31] flex justify-between items-center px-4 max-w-md mx-auto w-full">
-        <div className="flex items-center space-x-2">
-          {settings.logoUrl && <img src={settings.logoUrl} alt="Logo" className="w-6 h-6 rounded-full" />}
-          <span className="text-xs font-bold text-white tracking-widest">{settings.brandName || "MATCHABEAN"}</span>
+    <div className="min-h-screen bg-[#121d17] text-[#f7f5f0] font-sans">
+      {/* Switcher Header Mode (Member vs Admin) */}
+      <div className="flex justify-between items-center p-4 bg-[#1a2921] border-b border-emerald-800/30">
+        <div className="flex items-center gap-2">
+          <span className="font-bold tracking-wider text-emerald-400">{settings.brandName}</span>
         </div>
-        <button 
+        <button
           onClick={() => setMode(mode === 'member' ? 'admin' : 'member')}
-          className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-[#2b3f31] text-[#a3e635] flex items-center space-x-1"
+          className="flex items-center gap-2 text-xs bg-emerald-950 text-emerald-300 px-3 py-1.5 rounded-full border border-emerald-700/50 hover:bg-emerald-900 transition"
         >
-          {mode === 'member' ? <Shield size={12} /> : <Smartphone size={12} />}
-          <span>{mode === 'member' ? 'Akses Kasir' : 'Tampilan Member'}</span>
+          {mode === 'member' ? (
+            <>
+              <Shield className="w-3.5 h-3.5" /> Portal Admin
+            </>
+          ) : (
+            <>
+              <Smartphone className="w-3.5 h-3.5" /> Portal Member
+            </>
+          )}
         </button>
       </div>
 
-      {/* Main Body Routing */}
+      {/* Main Content Render */}
       {mode === 'member' ? (
         <MemberApp settings={settings} />
       ) : (
-        <div className="flex-1">
-          {!adminUser ? (
-            <div className="max-w-md mx-auto p-6 pt-12 space-y-6">
-              <div className="bg-[#1b2a20] p-6 rounded-3xl border border-[#2b3f31] space-y-4 text-center">
-                <h2 className="text-xl font-bold text-white">Login Outlet/Kasir</h2>
-                <form onSubmit={handleAdminLogin} className="space-y-3 text-left">
-                  <div>
-                    <label className="text-xs text-gray-400">Email Admin</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full mt-1 bg-[#121d17] border border-[#2b3f31] p-3 rounded-xl text-sm text-white focus:outline-none focus:border-[#a3e635]" required />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-400">Password</label>
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full mt-1 bg-[#121d17] border border-[#2b3f31] p-3 rounded-xl text-sm text-white focus:outline-none focus:border-[#a3e635]" required />
-                  </div>
-                  <button type="submit" className="w-full bg-[#a3e635] text-[#121d17] font-bold py-3 rounded-xl text-sm mt-2">
-                    MASUK ADMIN
-                  </button>
-                </form>
-              </div>
-            </div>
+        <div className="p-4 max-w-4xl mx-auto">
+          {adminUser ? (
+            <AdminDashboard settings={settings} setSettings={setSettings} />
           ) : (
-            <AdminDashboard settings={settings} setSettings={setSettings} adminUser={adminUser} />
+            <div className="max-w-sm mx-auto my-12 p-6 bg-[#1a2921] rounded-2xl border border-emerald-800/40 shadow-xl">
+              <h2 className="text-xl font-bold mb-4 text-center text-emerald-400">Login Admin</h2>
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <div>
+                  <label className="block text-xs text-emerald-200/70 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-[#121d17] border border-emerald-800/60 rounded-xl p-2.5 text-sm text-white w-full focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-emerald-200/70 mb-1">Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-[#121d17] border border-emerald-800/60 rounded-xl p-2.5 text-sm text-white w-full focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full bg-emerald-500 text-[#121d17] font-bold py-2.5 rounded-xl hover:bg-emerald-400 transition"
+                >
+                  Masuk
+                </button>
+              </form>
+            </div>
           )}
         </div>
       )}
