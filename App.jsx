@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { auth, db, signOut } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import MemberApp from './components/MemberApp';
-import MemberDashboard from './components/MemberDashboard';
-import AdminApp from './components/AdminApp';
+import MemberApp from './MemberApp';
+import MemberDashboard from './MemberDashboard';
+import AdminApp from './AdminApp';
 
 const defaultBrand = {
   name: 'MATCHABEAN',
