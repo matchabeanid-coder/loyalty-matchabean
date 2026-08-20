@@ -1,1 +1,10 @@
-{"type":"module","dependencies":{"firebase-admin":"^13.4.0"}}
+{
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "firebase-admin": "..."
+  }
+}
