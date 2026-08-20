@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { db } from '../../firebase';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import QRScanner from './QRScanner';
-import PromoSlider from './PromoSlider';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import QRScanner from '../../QRScanner.jsx';
+import PromoSlider from '../../PromoSlider.jsx';
 
 export default function MemberApp({ settings }) {
   const [member, setMember] = useState(null);
@@ -33,8 +33,8 @@ export default function MemberApp({ settings }) {
   return (
     <div className="p-4 max-w-md mx-auto space-y-6">
       <div className="bg-[#1a2921] p-6 rounded-3xl border border-emerald-800/40 text-center shadow-lg">
-        <h1 className="text-2xl font-bold text-emerald-400 mb-1">{settings.brandName}</h1>
-        <p className="text-xs text-emerald-200/60 mb-6">{settings.tagline}</p>
+        <h1 className="text-2xl font-bold text-emerald-400 mb-1">{settings?.brandName || 'MATCHABEAN'}</h1>
+        <p className="text-xs text-emerald-200/60 mb-6">{settings?.tagline || 'Balance in every cup'}</p>
 
         <form onSubmit={handleSearch} className="space-y-3">
           <input
@@ -62,12 +62,12 @@ export default function MemberApp({ settings }) {
               <p className="text-xs text-emerald-200/60">{member.phone}</p>
             </div>
             <div className="bg-emerald-950 px-3 py-1 rounded-full border border-emerald-700/50 text-xs text-emerald-300 font-bold">
-              {member.stamps || 0} / {settings.stampTarget} Stamp
+              {member.stamps || 0} / {settings?.stampTarget || 10} Stamp
             </div>
           </div>
 
           <div className="grid grid-cols-5 gap-2 py-4">
-            {Array.from({ length: settings.stampTarget }).map((_, i) => (
+            {Array.from({ length: settings?.stampTarget || 10 }).map((_, i) => (
               <div
                 key={i}
                 className={`aspect-square rounded-2xl flex items-center justify-center font-bold text-sm border ${
