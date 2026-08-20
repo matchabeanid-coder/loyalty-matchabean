@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from './firebaseConfig'; // Pastikan sesuai dengan nama file konfigurasi Firebase kamu
+import { db } from './firebase';
+ // Pastikan sesuai dengan nama file konfigurasi Firebase kamu
 import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 
 export default function AdminApp({ onLogout }) {
