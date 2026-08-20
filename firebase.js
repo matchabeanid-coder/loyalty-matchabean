@@ -1,18 +1,19 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: "AIzaSyCgso55_TlnaPCxTAr-p12j_8BJ-hD19NU",
+  authDomain: "matchabeanloyalty.firebaseapp.com",
+  projectId: "matchabeanloyalty",
+  storageBucket: "matchabeanloyalty.firebasestorage.app",
+  messagingSenderId: "204433042669",
+  appId: "1:204433042669:web:07e45979de581895e830e4"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+
+// Export layanan database dan otentikasi
 export const db = getFirestore(app);
-export const storage = getStorage(app);
+export const auth = getAuth(app);
