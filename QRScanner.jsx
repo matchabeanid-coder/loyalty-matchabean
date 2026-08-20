@@ -1,3 +1,32 @@
-import React,{useEffect,useRef,useState} from 'react';
-import {Html5Qrcode} from 'html5-qrcode';
-export default function QRScanner({onScan}){const ref=useRef(null);const [error,setError]=useState('');useEffect(()=>{let scanner;let stopped=false;(async()=>{try{scanner=new Html5Qrcode('qr-reader');await scanner.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:240}},text=>{if(stopped)return;stopped=true;onScan(text.trim());scanner.stop().catch(()=>{});},()=>{});}catch(e){setError('Kamera tidak bisa dibuka. Izinkan akses kamera di browser.')}})();return()=>{stopped=true;scanner?.stop().catch(()=>{})}},[onScan]);return <div className="scanner-card"><div id="qr-reader" ref={ref}/>{error&&<p className="error">{error}</p>}</div>}
+import React, { useEffect } from 'react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+
+export default function QRScanner({ onScanSuccess }) {
+  useEffect(() => {
+    const scanner = new Html5QrcodeScanner(
+      "qr-reader",
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      /* verbose= */ false
+    );
+
+    scanner.render(
+      (decodedText) => {
+        scanner.clear();
+        onScanSuccess(decodedText);
+      },
+      (errorMessage) => {
+        // ignore scan errors
+      }
+    );
+
+    return () => {
+      scanner.clear().catch(err => console.error("Scanner clear error", err));
+    };
+  }, [onScanSuccess]);
+
+  return (
+    <div className="w-full bg-[#1b2a20] p-4 rounded-2xl border border-[#2b3f31]">
+      <div id="qr-reader" className="w-full overflow-hidden rounded-xl"></div>
+    </div>
+  );
+}
