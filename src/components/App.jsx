@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-// 1. Naik dua tingkat ke root folder untuk mengambil firebase.js
 import { auth, db } from '../../firebase'; 
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 
-// 2. Import komponen selevel di dalam folder src/components/
+// Komponen yang ada di dalam folder src/components/
 import MemberApp from './MemberApp';
-import MemberDashboard from './MemberDashboard';
-import AdminApp from './AdminApp';
+
+// Komponen & file yang ada di luar (root folder)
+import MemberDashboard from '../../MemberDashboard';
+import AdminApp from '../../AdminApp';
 
 const defaultBrand = {
   name: 'MATCHABEAN',
