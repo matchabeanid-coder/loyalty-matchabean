@@ -3,10 +3,10 @@ import { auth, db } from '../../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 
-// Komponen yang ada di dalam folder src/components/
+// Komponen di dalam folder yang sama (src/components/)
 import MemberApp from './MemberApp';
 
-// Komponen & file yang ada di luar (root folder)
+// Komponen & file yang berada di root folder (naik satu tingkat dari src/components)
 import MemberDashboard from '../../MemberDashboard';
 import AdminApp from '../../AdminApp';
 
