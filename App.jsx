@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { auth, db, signOut } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import MemberApp from './MemberApp';
-import MemberDashboard from './MemberDashboard';
-import AdminApp from './AdminApp';
+
+// Import komponen dari folder src/components/
+import MemberApp from './src/components/MemberApp';
+import MemberDashboard from './src/components/MemberDashboard';
+import AdminApp from './src/components/AdminApp';
 
 const defaultBrand = {
   name: 'MATCHABEAN',
@@ -15,7 +17,8 @@ const defaultBrand = {
 };
 
 export default function App() {
-  const [screen, setScreen] = useState(null);
+  // Set default screen langsung ke 'member' agar form estetik muncul
+  const [screen, setScreen] = useState('member'); 
   const [member, setMember] = useState(null);
   const [brand, setBrand] = useState(defaultBrand);
   const [promos, setPromos] = useState([]);
@@ -31,7 +34,6 @@ export default function App() {
         if (snap.exists()) setMember({ id: snap.id, ...snap.data() });
         else setMember(null);
       } catch (e) {
-        // Admin accounts do not have a member document; ignore that case.
         setMember(null);
       }
     });
@@ -57,6 +59,7 @@ export default function App() {
     };
   }, [member?.id]);
 
+  // Jika member sudah terverifikasi login
   if (member) {
     return (
       <MemberDashboard
@@ -66,24 +69,17 @@ export default function App() {
         onLogout={async () => {
           await signOut(auth);
           setMember(null);
-          setScreen(null);
+          setScreen('member');
         }}
       />
     );
   }
 
-  if (screen === 'admin') return <AdminApp onBack={() => setScreen(null)} />;
-  if (screen === 'member') return <MemberApp onLogin={setMember} onBack={() => setScreen(null)} />;
+  // Jika membuka Portal Admin
+  if (screen === 'admin') {
+    return <AdminApp onBack={() => setScreen('member')} />;
+  }
 
-  const register = new URLSearchParams(location.search).get('register') === '1';
-  return (
-    <div className="landing">
-      <img src={defaultBrand.logo} className="landing-logo" alt="Matchabean" />
-      <h1>MATCHABEAN CLUB</h1>
-      <p>{defaultBrand.tagline}</p>
-      <button className="primary" onClick={() => setScreen('member')}>{register ? 'DAFTAR MEMBER' : 'MEMBER'}</button>
-      {!register && <button className="outline" onClick={() => setScreen('admin')}>ADMIN / KASIR</button>}
-      <small>Member dan Admin berada dalam 1 aplikasi, tetapi aksesnya terpisah.</small>
-    </div>
-  );
+  // Default: Menampilkan Form Member/Registrasi Estetik
+  return <MemberApp settings={brand} onLogin={setMember} onAdminClick={() => setScreen('admin')} />;
 }
